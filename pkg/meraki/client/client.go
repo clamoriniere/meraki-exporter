@@ -42,6 +42,7 @@ func NewClient(urlBase *url.URL, token, version string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &Client{
 		baseURL: urlBase.ResolveReference(versionPath),
 		token:   token,
@@ -224,8 +225,8 @@ func (dc *deviceClient) Performance() (*api.Performance, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Reply status code not 200, current code:%d", resp.StatusCode)
+	if !(resp.StatusCode >= 200 && resp.StatusCode < 300) {
+		return performance, fmt.Errorf("Reply status code not 200, current code:%d", resp.StatusCode)
 	}
 	return performance, err
 }
@@ -268,10 +269,11 @@ func (c *Client) do(req *http.Request, v interface{}) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		return resp, nil
 	}
-	defer resp.Body.Close()
+
 	err = json.NewDecoder(resp.Body).Decode(v)
 	if err != nil {
 		return resp, err

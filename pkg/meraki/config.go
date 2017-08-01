@@ -3,6 +3,7 @@ package meraki
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"net/url"
 
@@ -10,16 +11,18 @@ import (
 )
 
 const (
-	BaseUrlDefaut    = "https://dashboard.meraki.com/api/"
-	APIVersionDefaut = "v0"
+	BaseUrlDefaut           = "https://dashboard.meraki.com/api/"
+	APIVersionDefaut        = "v0"
+	APIScrapFrequencyDefaut = time.Duration(5 * time.Second)
 )
 
 // Config used to store the exporter configuration
 type Config struct {
-	Addr       string   // The address to listen on for HTTP requests.
-	BaseUrl    *url.URL // the Meraki Dashboard API Base Url
-	APIVersion string   // the Meraki Dashboard API version
-	Token      string
+	Addr       string            // The address to listen on for HTTP requests.
+	BaseUrl    *url.URL          // the Meraki Dashboard API Base Url
+	APIVersion string            // the Meraki Dashboard API version
+	Tokens     []string          // list of Meraki Dashboard API token
+	Freq       time.Duration     // the scraping frequency
 	Labels     map[string]string // Labels added automaticaly to all metrics
 }
 
@@ -34,10 +37,11 @@ func NewConfig() *Config {
 // Init used to initialize the configuration
 func (c *Config) Init() error {
 	flag.StringVar(&c.Addr, "listen-address", ":8080", "The address to listen on for HTTP requests.")
-	flag.StringVar(&c.Token, "api-token", "", "The Meraki dashboard API token.")
+	flag.StringSliceVar(&c.Tokens, "api-token", []string{}, "The Meraki dashboard API tokens.")
 	baseUrl := ""
 	flag.StringVar(&baseUrl, "api-base-url", BaseUrlDefaut, "The Meraki dashboard API base URL")
 	flag.StringVar(&c.APIVersion, "api-version", APIVersionDefaut, "The Meraki dashboard API version")
+	flag.DurationVar(&c.Freq, "api-freq", APIScrapFrequencyDefaut, "Time between 2 API scraping")
 	tmpLabels := []string{}
 	flag.StringSliceVar(&tmpLabels, "label", []string{}, "Used to add label (key:value) to all metrics")
 
